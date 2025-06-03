@@ -4,26 +4,32 @@ const { ytdown } = require("nayan-media-downloaders");
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Ruta raíz
+// Ruta con parámetro GET ?url=
 app.get("/", async (req, res) => {
+  const videoUrl = req.query.url;
+
+  if (!videoUrl) {
+    return res.status(400).json({
+      status: "error",
+      error: "Falta el parámetro ?url"
+    });
+  }
+
   try {
-    const result = await ytdown("https://youtu.be/aRSuyrZFu_Q?si=bsfzgeeGmRpsHqnF");
-    
+    const result = await ytdown(videoUrl);
     res.json({
       status: "ok",
       video: result
     });
-
   } catch (err) {
-    console.error("Error:", err.message);
+    console.error("❌ Error:", err.message);
     res.status(500).json({
       status: "error",
-      message: err.message
+      error: err.message || "Error procesando el video"
     });
   }
 });
 
-// Iniciar servidor
 app.listen(port, () => {
-  console.log(`🟢 Servidor activo en http://localhost:${port}`);
+  console.log(`✅ Servidor corriendo en http://localhost:${port}`);
 });
