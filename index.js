@@ -53,7 +53,7 @@ app.get("/", async (req, res) => {
   }
 });
 
-// Ruta para descargar video mp4
+// Ruta para descargar video mp4 (redirige al navegador)
 app.get("/mp4/:id_video", async (req, res) => {
   const id = req.params.id_video;
   const videoUrl = `https://www.youtube.com/watch?v=${id}`;
@@ -66,25 +66,18 @@ app.get("/mp4/:id_video", async (req, res) => {
       return res.status(404).send("Video no disponible para descarga");
     }
 
-    // Fetch video stream desde url externa
-    const response = await fetch(videoLink);
-    if (!response.ok) {
-      return res.status(404).send("No se pudo descargar el video");
-    }
-
+    // Redirigir al navegador con headers de descarga
     res.setHeader("Content-Disposition", `attachment; filename="${id}.mp4"`);
-    res.setHeader("Content-Type", "video/mp4");
-
-    // Stream directo al cliente
-    response.body.pipe(res);
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.redirect(videoLink); // El navegador hará la descarga
 
   } catch (err) {
-    console.error("Error descargando mp4:", err);
-    res.status(500).send("Error interno al descargar mp4");
+    console.error("Error al redirigir MP4:", err);
+    res.status(500).send("Error interno al procesar MP4");
   }
 });
 
-// Ruta para descargar audio mp3
+// Ruta para descargar audio mp3 (redirige al navegador)
 app.get("/mp3/:id_video", async (req, res) => {
   const id = req.params.id_video;
   const videoUrl = `https://www.youtube.com/watch?v=${id}`;
@@ -97,19 +90,19 @@ app.get("/mp3/:id_video", async (req, res) => {
       return res.status(404).send("Audio no disponible para descarga");
     }
 
-    const response = await fetch(audioLink);
-    if (!response.ok) {
-      return res.status(404).send("No se pudo descargar el audio");
-    }
+    // Detectar si es webm
+    const isWebm = audioLink.includes(".webm") || audioLink.includes("mime=audio/webm");
 
-    res.setHeader("Content-Disposition", `attachment; filename="${id}.mp3"`);
-    res.setHeader("Content-Type", "audio/mpeg");
+    // Usar extensión real
+    const ext = isWebm ? "webm" : "mp3";
 
-    response.body.pipe(res);
+    res.setHeader("Content-Disposition", `attachment; filename="${id}.${ext}"`);
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.redirect(audioLink); // Descarga directa
 
   } catch (err) {
-    console.error("Error descargando mp3:", err);
-    res.status(500).send("Error interno al descargar mp3");
+    console.error("Error al redirigir MP3:", err);
+    res.status(500).send("Error interno al procesar MP3");
   }
 });
 
