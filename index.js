@@ -4,6 +4,7 @@ const { ytdown } = require("nayan-media-downloaders");
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Ruta JSON principal
 app.get("/", async (req, res) => {
   const videoUrl = req.query.url;
 
@@ -53,7 +54,7 @@ app.get("/", async (req, res) => {
   }
 });
 
-// Ruta para descargar video mp4 (redirige al navegador)
+// Ruta para descargar video MP4 automáticamente
 app.get("/mp4/:id_video", async (req, res) => {
   const id = req.params.id_video;
   const videoUrl = `https://www.youtube.com/watch?v=${id}`;
@@ -66,18 +67,32 @@ app.get("/mp4/:id_video", async (req, res) => {
       return res.status(404).send("Video no disponible para descarga");
     }
 
-    // Redirigir al navegador con headers de descarga
-    res.setHeader("Content-Disposition", `attachment; filename="${id}.mp4"`);
-    res.setHeader("Content-Type", "application/octet-stream");
-    res.redirect(videoLink); // El navegador hará la descarga
+    // Genera página HTML que dispara descarga automática
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Descargando video...</title>
+      </head>
+      <body>
+        <a id="download" href="${videoLink}" download="${id}.mp4" style="display:none;"></a>
+        <script>
+          document.getElementById('download').click();
+          setTimeout(() => window.close(), 3000);
+        </script>
+        <p>Iniciando descarga de video...</p>
+      </body>
+      </html>
+    `);
 
   } catch (err) {
-    console.error("Error al redirigir MP4:", err);
+    console.error("Error al procesar descarga MP4:", err);
     res.status(500).send("Error interno al procesar MP4");
   }
 });
 
-// Ruta para descargar audio mp3 (redirige al navegador)
+// Ruta para descargar audio MP3 automáticamente
 app.get("/mp3/:id_video", async (req, res) => {
   const id = req.params.id_video;
   const videoUrl = `https://www.youtube.com/watch?v=${id}`;
@@ -90,18 +105,29 @@ app.get("/mp3/:id_video", async (req, res) => {
       return res.status(404).send("Audio no disponible para descarga");
     }
 
-    // Detectar si es webm
     const isWebm = audioLink.includes(".webm") || audioLink.includes("mime=audio/webm");
-
-    // Usar extensión real
     const ext = isWebm ? "webm" : "mp3";
 
-    res.setHeader("Content-Disposition", `attachment; filename="${id}.${ext}"`);
-    res.setHeader("Content-Type", "application/octet-stream");
-    res.redirect(audioLink); // Descarga directa
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Descargando audio...</title>
+      </head>
+      <body>
+        <a id="download" href="${audioLink}" download="${id}.${ext}" style="display:none;"></a>
+        <script>
+          document.getElementById('download').click();
+          setTimeout(() => window.close(), 3000);
+        </script>
+        <p>Iniciando descarga de audio...</p>
+      </body>
+      </html>
+    `);
 
   } catch (err) {
-    console.error("Error al redirigir MP3:", err);
+    console.error("Error al procesar descarga MP3:", err);
     res.status(500).send("Error interno al procesar MP3");
   }
 });
