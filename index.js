@@ -54,81 +54,63 @@ app.get("/", async (req, res) => {
   }
 });
 
-// Ruta para descargar video MP4 automáticamente
-app.get("/mp4/:id_video", async (req, res) => {
-  const id = req.params.id_video;
-  const videoUrl = `https://www.youtube.com/watch?v=${id}`;
-
-  try {
-    const data = await ytdown(videoUrl);
-    const videoLink = data.data.video_hd || data.data.video;
-
-    if (!videoLink) {
-      return res.status(404).send("Video no disponible para descarga");
-    }
-
-    // Genera página HTML que dispara descarga automática
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8">
-        <title>Descargando video...</title>
-      </head>
-      <body>
-        <a id="download" href="${videoLink}" download="${id}.mp4" style="display:none;"></a>
-        <script>
-          document.getElementById('download').click();
-          setTimeout(() => window.close(), 3000);
-        </script>
-        <p>Iniciando descarga de video...</p>
-      </body>
-      </html>
-    `);
-
-  } catch (err) {
-    console.error("Error al procesar descarga MP4:", err);
-    res.status(500).send("Error interno al procesar MP4");
-  }
-});
-
-// Ruta para descargar audio MP3 automáticamente
+ const https = require("https"); // mejor para URLs HTTPS externas
 app.get("/mp3/:id_video", async (req, res) => {
   const id = req.params.id_video;
   const videoUrl = `https://www.youtube.com/watch?v=${id}`;
 
   try {
     const data = await ytdown(videoUrl);
-    const audioLink = data.data.audio;
+    const audioUrl = data.data.audio;
 
-    if (!audioLink) {
-      return res.status(404).send("Audio no disponible para descarga");
-    }
+    if (!audioUrl) return res.status(404).send("Audio no disponible");
 
-    const isWebm = audioLink.includes(".webm") || audioLink.includes("mime=audio/webm");
+    const isWebm = audioUrl.includes(".webm") || audioUrl.includes("mime=audio/webm");
     const ext = isWebm ? "webm" : "mp3";
+    const filename = `${id}.${ext}`;
 
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8">
-        <title>Descargando audio...</title>
-      </head>
-      <body>
-        <a id="download" href="${audioLink}" download="${id}.${ext}" style="display:none;"></a>
-        <script>
-          document.getElementById('download').click();
-          setTimeout(() => window.close(), 3000);
-        </script>
-        <p>Iniciando descarga de audio...</p>
-      </body>
-      </html>
-    `);
+    // Cabeceras para forzar descarga
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Type", "audio/mpeg");
+
+    // Pipeo del audio remoto al usuario
+    https.get(audioUrl, (stream) => {
+      stream.pipe(res);
+    }).on("error", (err) => {
+      console.error("❌ Error al descargar audio:", err);
+      res.status(500).send("Error al descargar audio");
+    });
 
   } catch (err) {
-    console.error("Error al procesar descarga MP3:", err);
-    res.status(500).send("Error interno al procesar MP3");
+    console.error("❌ Error procesando MP3:", err);
+    res.status(500).send("Error interno");
+  }
+});
+
+app.get("/mp4/:id_video", async (req, res) => {
+  const id = req.params.id_video;
+  const videoUrl = `https://www.youtube.com/watch?v=${id}`;
+
+  try {
+    const data = await ytdown(videoUrl);
+    const videoUrlFinal = data.data.video_hd || data.data.video;
+
+    if (!videoUrlFinal) return res.status(404).send("Video no disponible");
+
+    const filename = `${id}.mp4`;
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Type", "video/mp4");
+
+    https.get(videoUrlFinal, (stream) => {
+      stream.pipe(res);
+    }).on("error", (err) => {
+      console.error("❌ Error al descargar video:", err);
+      res.status(500).send("Error al descargar video");
+    });
+
+  } catch (err) {
+    console.error("❌ Error procesando MP4:", err);
+    res.status(500).send("Error interno");
   }
 });
 
