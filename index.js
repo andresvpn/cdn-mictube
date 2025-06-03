@@ -23,10 +23,8 @@ app.get("/", async (req, res) => {
       video: data.data.video,
       video_hd: data.data.video_hd,
       audio: data.data.audio,
-      calidad: data.data.quality,
-      canal: data.data.channel,
-      descripcion: data.data.desc
-    };
+      calidad: data.data.quality
+     };
 
     console.log("📦 Resultado limpio:");
     console.log(JSON.stringify(result, null, 2));
