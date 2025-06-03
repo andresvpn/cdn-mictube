@@ -16,30 +16,34 @@ app.get("/", async (req, res) => {
   }
 
   try {
-    const result = await ytdown(videoUrl);
+    const data = await ytdown(videoUrl);
 
-    // Ordenar las claves alfabéticamente
-    const sortedResult = {};
-    Object.keys(result)
-      .sort()
-      .forEach((key) => {
-        sortedResult[key] = result[key];
-      });
+    // Extraemos los campos que queremos renombrar
+    const result = {
+      titulo: data.data.title,
+      imagen: data.data.thumb,
+      video: data.data.video,
+      video_hd: data.data.video_hd,
+      audio: data.data.audio,
+      calidad: data.data.quality,
+      canal: data.data.channel,
+      descripcion: data.data.desc
+    };
 
-    // Imprimir en consola
-    console.log("🎬 Resultados ordenados:");
-    console.log(JSON.stringify(sortedResult, null, 2));
+    // Imprimimos por consola el resultado limpio
+    console.log("📦 Resultado limpio:");
+    console.log(JSON.stringify(result, null, 2));
 
-    // Respuesta ordenada
+    // Respondemos al cliente con formato limpio
     res.json({
       status: "ok",
-      video: sortedResult
+      result: result
     });
   } catch (err) {
-    console.error("❌ Error:", err.message);
+    console.error("❌ Error al obtener el video:", err);
     res.status(500).json({
       status: "error",
-      error: err.message || "Error procesando el video"
+      error: "No se pudo procesar el video"
     });
   }
 });
