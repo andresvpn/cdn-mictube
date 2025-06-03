@@ -54,7 +54,35 @@ app.get("/", async (req, res) => {
   }
 });
 
- 
+ app.get("/terabox", async (req, res) => {
+  const url = req.query.url;
+
+  if (!url) {
+    return res.status(400).json({
+      status: "error",
+      error: "Falta el parámetro ?url"
+    });
+  }
+
+  try {
+    const { terabox } = require("nayan-media-downloaders");
+    const data = await terabox(url);
+
+    res.setHeader("Content-Type", "application/json");
+    res.send(JSON.stringify({
+      status: "ok",
+      result: data
+    }, null, 2)); // formato con 2 espacios
+
+  } catch (error) {
+    console.error("Error fetching Terabox data:", error);
+    res.status(500).json({
+      status: "error",
+      error: "No se pudo procesar la URL de Terabox"
+    });
+  }
+});
+
 app.listen(port, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${port}`);
 });
