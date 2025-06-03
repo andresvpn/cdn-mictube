@@ -1,5 +1,7 @@
 const express = require('express');
 const youtubedl = require('youtube-dl-exec');
+const https = require('https');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -22,7 +24,7 @@ app.get('/cdn/:format(mp3|mp4)/:id', async (req, res) => {
     let selectedFormat;
 
     if (format === 'mp3') {
-      selectedFormat = info.formats.find(f => f.ext === 'm4a' || f.ext === 'webm' && f.asr);
+      selectedFormat = info.formats.find(f => (f.ext === 'm4a' || f.ext === 'webm') && f.asr);
     } else {
       selectedFormat = info.formats.find(f => f.ext === 'mp4' && f.height && f.url);
     }
@@ -34,7 +36,17 @@ app.get('/cdn/:format(mp3|mp4)/:id', async (req, res) => {
       });
     }
 
-    return res.redirect(selectedFormat.url);
+    const filename = `${info.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_')}.${format}`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', format === 'mp3' ? 'audio/mpeg' : 'video/mp4');
+
+    // Hacer proxy del contenido
+    https.get(selectedFormat.url, (stream) => {
+      stream.pipe(res);
+    }).on('error', (err) => {
+      console.error('Stream error:', err);
+      res.status(500).json({ status: 'error', error: 'Error al descargar el archivo' });
+    });
 
   } catch (err) {
     return res.status(500).json({
@@ -45,7 +57,7 @@ app.get('/cdn/:format(mp3|mp4)/:id', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('by: andres vpn');
+  res.send('🎬 by: andres vpn - YouTube Downloader');
 });
 
 app.listen(port, () => {
