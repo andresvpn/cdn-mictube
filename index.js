@@ -34,4 +34,3 @@ app.get("/", async (req, res) => {
 app.listen(port, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${port}`);
 });
-  Mejor solo dame el resultado en JSON ordenando y ya 
