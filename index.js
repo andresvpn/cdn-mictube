@@ -4,7 +4,6 @@ const { ytdown } = require("nayan-media-downloaders");
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Ruta principal: http://localhost:3000/?url=https://youtube.com/...
 app.get("/", async (req, res) => {
   const videoUrl = req.query.url;
 
@@ -18,7 +17,6 @@ app.get("/", async (req, res) => {
   try {
     const data = await ytdown(videoUrl);
 
-    // Extraemos los campos que queremos renombrar
     const result = {
       titulo: data.data.title,
       imagen: data.data.thumb,
@@ -30,15 +28,23 @@ app.get("/", async (req, res) => {
       descripcion: data.data.desc
     };
 
-    // Imprimimos por consola el resultado limpio
     console.log("📦 Resultado limpio:");
     console.log(JSON.stringify(result, null, 2));
 
-    // Respondemos al cliente con formato limpio
-    res.json({
+    // Para evitar cache y formatear JSON con sangría, usa res.set + JSON.stringify manualmente:
+    res.set({
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+      "Surrogate-Control": "no-store"
+    });
+
+    res.send(JSON.stringify({
       status: "ok",
       result: result
-    });
+    }, null, 2)); // null, 2 para pretty print
+
   } catch (err) {
     console.error("❌ Error al obtener el video:", err);
     res.status(500).json({
