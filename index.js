@@ -1,9 +1,3 @@
-Utiliza este agrega la respuesta del JSON Entonces has agrega header user agent todo bien ya funcional y que la respuesta JSON la muestre ordenaba en el navegador ejemplo
-
-Uso: usuario,
-Has:Jajaj
-No 
-Jaja: jaja, jaja: hijo
 
 const express = require("express");
 const { ytdown } = require("nayan-media-downloaders");
